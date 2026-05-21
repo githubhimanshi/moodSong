@@ -5,3 +5,5 @@ transformers
 torch
 huggingface_hub
 gunicorn
+fastapi
+uvicorn
