@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoodTune</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #080810;
+    --surface:  #0e0e1a;
+    --card:     #12121e;
+    --border:   rgba(255,255,255,0.07);
+    --accent:   #b8ff47;
+    --accent2:  #ff4f6d;
+    --accent3:  #47c8ff;
+    --text:     #ececf5;
+    --muted:    #5a5a72;
+    --muted2:   #3a3a52;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Grain ── */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.35; mix-blend-mode: overlay;
+  }
+
+  /* ── BG orbs ── */
+  .orb {
+    position: fixed; border-radius: 50%; pointer-events: none; filter: blur(100px); opacity: 0.12;
+  }
+  .orb1 { width: 600px; height: 600px; background: var(--accent);  top: -200px; right: -200px; }
+  .orb2 { width: 500px; height: 500px; background: var(--accent2); bottom: -200px; left: -150px; }
+  .orb3 { width: 300px; height: 300px; background: var(--accent3); top: 40%; left: 40%; opacity: 0.07; }
+
+  /* ── Header ── */
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 48px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0;
+    background: rgba(8,8,16,0.85);
+    backdrop-filter: blur(24px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; letter-spacing: 2px;
+    display: flex; align-items: baseline; gap: 2px;
+  }
+  .logo-dot { color: var(--accent); font-size: 36px; line-height: 0; margin-bottom: -4px; }
+
+  .header-right {
+    display: flex; align-items: center; gap: 24px;
+  }
+  .tagline {
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 3px; text-transform: uppercase;
+  }
+  .header-pill {
+    font-size: 10px; color: var(--accent);
+    border: 1px solid rgba(184,255,71,0.2);
+    padding: 4px 10px; border-radius: 20px;
+    letter-spacing: 1px;
+    animation: pulse-border 2.5s ease infinite;
+  }
+  @keyframes pulse-border {
+    0%,100% { border-color: rgba(184,255,71,0.2); }
+    50%      { border-color: rgba(184,255,71,0.5); }
+  }
+
+  /* ── Main ── */
+  main { max-width: 1000px; margin: 0 auto; padding: 72px 48px; }
+
+  /* ── Hero ── */
+  .hero { margin-bottom: 72px; }
+
+  .hero-eyebrow {
+    font-size: 11px; color: var(--accent);
+    letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .hero-eyebrow::before {
+    content: ''; display: block;
+    width: 32px; height: 1px; background: var(--accent);
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(56px, 9vw, 96px);
+    line-height: 0.9;
+    letter-spacing: 2px;
+    margin-bottom: 28px;
+  }
+  .hero-title em {
+    font-style: normal;
+    -webkit-text-stroke: 1.5px var(--accent);
+    color: transparent;
+  }
+
+  .hero-sub {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 18px; color: var(--muted);
+    line-height: 1.6; max-width: 480px;
+    margin-bottom: 40px;
+  }
+
+  /* ── Drop zone ── */
+  .drop-zone {
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 52px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    background: var(--surface);
+    position: relative; overflow: hidden;
+  }
+  .drop-zone::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(184,255,71,0.05) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: rgba(184,255,71,0.4);
+    background: rgba(184,255,71,0.02);
+    transform: translateY(-2px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(184,255,71,0.1);
+  }
+  .drop-zone.dragover { transform: scale(1.015) translateY(-2px); }
+  .drop-zone.has-file { padding: 24px 40px; }
+
+  .drop-icon-ring {
+    width: 72px; height: 72px; border-radius: 50%;
+    border: 1px solid rgba(184,255,71,0.25);
+    background: rgba(184,255,71,0.05);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 28px;
+    transition: all 0.2s;
+  }
+  .drop-zone:hover .drop-icon-ring {
+    border-color: rgba(184,255,71,0.5);
+    background: rgba(184,255,71,0.08);
+    transform: scale(1.05);
+  }
+
+  .drop-primary { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+  .drop-secondary { font-size: 12px; color: var(--muted); }
+
+  .preview-wrap {
+    position: relative; display: inline-block;
+    border-radius: 12px; overflow: hidden;
+  }
+  .preview-img {
+    max-height: 220px; max-width: 100%;
+    border-radius: 12px; display: block;
+    object-fit: cover;
+  }
+  .preview-change {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s;
+    font-size: 12px; letter-spacing: 1px;
+    color: white;
+  }
+  .preview-wrap:hover .preview-change { opacity: 1; }
+
+  #file-input { display: none; }
+
+  /* ── Analyze btn ── */
+  .btn-row { margin-top: 20px; display: flex; align-items: center; gap: 16px; }
+
+  .btn-analyze {
+    background: var(--accent);
+    color: #080810;
+    border: none;
+    padding: 15px 40px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: none; align-items: center; gap: 10px;
+  }
+  .btn-analyze:hover { background: #ceff6a; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(184,255,71,0.3); }
+  .btn-analyze:active { transform: translateY(0); }
+  .btn-analyze.visible { display: inline-flex; }
+  .btn-analyze:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .file-hint { font-size: 11px; color: var(--muted); }
+
+  /* ── Loading ── */
+  .loading { display: none; text-align: center; padding: 80px 0; }
+  .loading.visible { display: block; }
+
+  .loading-bars {
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: 5px; height: 48px; margin: 0 auto 28px;
+  }
+  .l-bar {
+    width: 4px; background: var(--accent); border-radius: 2px;
+    animation: barPulse 1.1s ease-in-out infinite;
+  }
+  .l-bar:nth-child(1) { height: 20px; animation-delay: 0s;    }
+  .l-bar:nth-child(2) { height: 36px; animation-delay: 0.1s;  }
+  .l-bar:nth-child(3) { height: 28px; animation-delay: 0.2s;  }
+  .l-bar:nth-child(4) { height: 44px; animation-delay: 0.15s; }
+  .l-bar:nth-child(5) { height: 24px; animation-delay: 0.25s; }
+  .l-bar:nth-child(6) { height: 38px; animation-delay: 0.05s; }
+  .l-bar:nth-child(7) { height: 18px; animation-delay: 0.3s;  }
+  @keyframes barPulse {
+    0%,100% { transform: scaleY(0.3); opacity: 0.3; }
+    50%      { transform: scaleY(1);   opacity: 1;   }
+  }
+
+  .loading-label { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; color: var(--text); }
+  .loading-step  { font-size: 11px; color: var(--accent); margin-top: 10px; letter-spacing: 1.5px; min-height: 20px; }
+
+  /* ── Results ── */
+  #results { display: none; }
+  #results.visible { display: block; animation: fadeIn 0.5s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+  .results-header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-bottom: 32px; padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .results-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px; letter-spacing: 2px;
+  }
+  .results-title span { color: var(--accent); }
+
+  .btn-reset {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: 8px 18px;
+    border-radius: 8px; font-family: 'DM Mono', monospace;
+    font-size: 11px; cursor: pointer; letter-spacing: 1px;
+    transition: all 0.15s;
+  }
+  .btn-reset:hover { border-color: var(--text); color: var(--text); }
+
+  /* ── Emotion banner ── */
+  .emotion-banner {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 36px;
+    display: flex; gap: 0; flex-wrap: wrap;
+    position: relative; overflow: hidden;
+  }
+  .emotion-banner::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: var(--accent);
+  }
+
+  .em-stat {
+    flex: 1; min-width: 120px;
+    padding: 0 24px;
+    border-right: 1px solid var(--border);
+  }
+  .em-stat:first-child { padding-left: 16px; }
+  .em-stat:last-child  { border-right: none; }
+  .em-key {
+    font-size: 9px; color: var(--muted);
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .em-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; letter-spacing: 1px;
+    text-transform: capitalize;
+  }
+  .em-val.accent { color: var(--accent); }
+  .em-val.sub    { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text); }
+
+  .color-swatches { display: flex; gap: 5px; margin-top: 2px; }
+  .swatch {
+    width: 22px; height: 22px; border-radius: 5px;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: transform 0.15s;
+  }
+  .swatch:hover { transform: scale(1.15); }
+
+  /* ── Songs ── */
+  .songs-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+
+  /* ── Song card ── */
+  .song-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    animation: slideUp 0.5s ease both;
+  }
+  .song-card:nth-child(2) { animation-delay: 0.1s; }
+  .song-card:nth-child(3) { animation-delay: 0.2s; }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .song-card:hover { border-color: rgba(255,255,255,0.14); box-shadow: 0 8px 40px rgba(0,0,0,0.4); }
+  .song-card.playing {
+    border-color: rgba(184,255,71,0.4);
+    box-shadow: 0 0 0 1px rgba(184,255,71,0.1), 0 12px 50px rgba(0,0,0,0.5);
+  }
+
+  .card-inner {
+    display: flex; align-items: center; gap: 20px;
+    padding: 20px 22px 0;
+  }
+
+  /* Cover */
+  .cover {
+    width: 68px; height: 68px; border-radius: 10px;
+    overflow: hidden; flex-shrink: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cover-placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+  }
+  .cover-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.15s; cursor: pointer;
+    font-size: 18px;
+  }
+  .cover:hover .cover-overlay,
+  .song-card.playing .cover-overlay { opacity: 1; }
+
+  /* Meta */
+  .song-meta { flex: 1; min-width: 0; }
+  .song-badges { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .badge {
+    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    border-radius: 4px; padding: 2px 8px;
+  }
+  .badge-style { color: var(--accent); border: 1px solid rgba(184,255,71,0.3); background: rgba(184,255,71,0.04); }
+  .badge-emotion { color: var(--muted); border: 1px solid var(--border); }
+
+  .song-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px; letter-spacing: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .song-desc {
+    font-size: 11px; color: var(--muted); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Duration */
+  .song-dur { font-size: 11px; color: var(--muted2); flex-shrink: 0; }
+
+  /* Waveform anim */
+  .wave-anim {
+    display: none; align-items: flex-end; gap: 2px; height: 18px; flex-shrink: 0;
+  }
+  .song-card.playing .wave-anim { display: flex; }
+  .wave-anim span {
+    width: 2px; background: var(--accent); border-radius: 1px;
+    animation: wavePulse 0.7s ease-in-out infinite;
+  }
+  .wave-anim span:nth-child(1) { height: 8px;  animation-delay: 0s; }
+  .wave-anim span:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+  .wave-anim span:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+  .wave-anim span:nth-child(4) { height: 16px; animation-delay: 0.15s; }
+  .wave-anim span:nth-child(5) { height: 8px;  animation-delay: 0.25s; }
+  @keyframes wavePulse {
+    0%,100% { transform: scaleY(0.35); opacity: 0.35; }
+    50%      { transform: scaleY(1);   opacity: 1; }
+  }
+
+  /* Audio player area */
+  .audio-wrap { padding: 14px 22px 18px; }
+
+  audio {
+    width: 100%; height: 38px; border-radius: 8px; outline: none;
+    accent-color: var(--accent);
+  }
+
+  /* No audio */
+  .no-audio {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: var(--surface); border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 12px; color: var(--muted);
+  }
+  .no-audio-icon { font-size: 16px; opacity: 0.5; }
+
+  /* Card footer */
+  .card-footer {
+    padding: 0 22px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-tags { font-size: 10px; color: var(--muted2); max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--accent2); color: white;
+    padding: 12px 24px; border-radius: 10px;
+    font-size: 13px; transition: transform 0.3s ease;
+    z-index: 10000; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    main { padding: 40px 20px; }
+    header { padding: 16px 20px; }
+    .hero-title { font-size: 52px; }
+    .em-stat { min-width: 100px; padding: 0 12px; }
+    .card-inner { gap: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<header>
+  <div class="logo">MoodTune<span class="logo-dot">.</span></div>
+  <div class="header-right">
+    <div class="tagline">Emotion → Music</div>
+    <div class="header-pill">● OFFLINE AI</div>
+  </div>
+</header>
+
+<main>
+  <!-- Hero / Upload -->
+  <section class="hero" id="upload-section">
+    <div class="hero-eyebrow">AI-Powered Mood Detection</div>
+    <h1 class="hero-title">Your Face.<br><em>Your Sound.</em></h1>
+    <p class="hero-sub">Upload a photo and MoodTune reads the emotion in your image, then generates three original music pieces that match your mood.</p>
+
+    <div class="drop-zone" id="drop-zone">
+      <div id="drop-default">
+        <div class="drop-icon-ring">📷</div>
+        <div class="drop-primary">Drop your photo here</div>
+        <div class="drop-secondary">or click to browse — JPG, PNG, WEBP, GIF</div>
+      </div>
+      <div id="drop-preview" style="display:none">
+        <div class="preview-wrap">
+          <img class="preview-img" id="preview-img" alt="preview">
+          <div class="preview-change">Click to change</div>
+        </div>
+      </div>
+    </div>
+
+    <input type="file" id="file-input" accept="image/*,video/*">
+
+    <div class="btn-row">
+      <button class="btn-analyze" id="btn-analyze">
+        Analyze &amp; Generate Music →
+      </button>
+      <div class="file-hint" id="file-hint"></div>
+    </div>
+  </section>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="loading-bars">
+      <div class="l-bar"></div><div class="l-bar"></div>
+      <div class="l-bar"></div><div class="l-bar"></div>
+      <div class="l-bar"></div><div class="l-bar"></div>
+      <div class="l-bar"></div>
+    </div>
+    <div class="loading-label">Generating Your Soundtrack</div>
+    <div class="loading-step" id="loading-step">Reading image…</div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="results-header">
+      <div class="results-title">Your <span>Soundtrack</span></div>
+      <button class="btn-reset" id="btn-reset">↩ New Photo</button>
+    </div>
+    <div class="emotion-banner" id="emotion-banner"></div>
+    <div class="songs-grid" id="songs-grid"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let selectedFile = null;
+let blobURLs     = [];   // track for cleanup
+
+// ── DOM ────────────────────────────────────────────────────────────────────
+const dropZone   = document.getElementById('drop-zone');
+const fileInput  = document.getElementById('file-input');
+const previewImg = document.getElementById('preview-img');
+const btnAnalyze = document.getElementById('btn-analyze');
+const loading    = document.getElementById('loading');
+const loadingStep= document.getElementById('loading-step');
+const results    = document.getElementById('results');
+const btnReset   = document.getElementById('btn-reset');
+
+// ── File handling ──────────────────────────────────────────────────────────
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+
+function setFile(f) {
+  selectedFile = f;
+  const url = URL.createObjectURL(f);
+  previewImg.src = url;
+  document.getElementById('drop-default').style.display = 'none';
+  document.getElementById('drop-preview').style.display = 'block';
+  dropZone.classList.add('has-file');
+  btnAnalyze.classList.add('visible');
+  const kb = Math.round(f.size / 1024);
+  document.getElementById('file-hint').textContent = `${f.name} · ${kb > 1024 ? (kb/1024).toFixed(1)+'MB' : kb+'KB'}`;
+}
+
+// ── Analyze ────────────────────────────────────────────────────────────────
+btnAnalyze.addEventListener('click', analyze);
+
+const STEPS = [
+  'Reading image…',
+  'Detecting emotions…',
+  'Analyzing colors & scene…',
+  'Composing music prompts…',
+  'Synthesizing Track 1…',
+  'Synthesizing Track 2…',
+  'Synthesizing Track 3…',
+  'Mixing & mastering…',
+];
+
+async function analyze() {
+  if (!selectedFile) return;
+  stopAllAudio();
+  revokeBlobURLs();
+
+  document.getElementById('upload-section').style.display = 'none';
+  loading.classList.add('visible');
+  results.classList.remove('visible');
+
+  let si = 0;
+  const stepTimer = setInterval(() => {
+    si = (si + 1) % STEPS.length;
+    loadingStep.textContent = STEPS[si];
+  }, 1600);
+
+  try {
+    const form = new FormData();
+    form.append('file', selectedFile);
+
+    const res = await fetch('/analyze', { method: 'POST', body: form });
+    clearInterval(stepTimer);
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    renderResults(data);
+
+  } catch (err) {
+    clearInterval(stepTimer);
+    loading.classList.remove('visible');
+    document.getElementById('upload-section').style.display = 'block';
+    showToast('⚠ ' + err.message);
+  }
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function renderResults(data) {
+  loading.classList.remove('visible');
+
+  // ── Emotion banner ──
+  const em = data.emotions || {};
+  const face = em.face || { label: 'unknown', score: 0 };
+  const swatches = (em.palette_rgb || [])
+    .map(([r,g,b]) => `<div class="swatch" style="background:rgb(${r},${g},${b})" title="rgb(${r},${g},${b})"></div>`)
+    .join('');
+  const moodStr = (em.color_mood || []).join(', ') || '—';
+
+  document.getElementById('emotion-banner').innerHTML = `
+    <div class="em-stat">
+      <div class="em-key">Detected Emotion</div>
+      <div class="em-val accent">${face.label}</div>
+    </div>
+    <div class="em-stat">
+      <div class="em-key">Confidence</div>
+      <div class="em-val">${Math.round((face.score || 0) * 100)}%</div>
+    </div>
+    <div class="em-stat">
+      <div class="em-key">Scene</div>
+      <div class="em-val sub">${em.scene || '—'}</div>
+    </div>
+    <div class="em-stat">
+      <div class="em-key">Mood Tags</div>
+      <div class="em-val sub">${moodStr}</div>
+    </div>
+    <div class="em-stat">
+      <div class="em-key">Color Palette</div>
+      <div class="color-swatches">${swatches}</div>
+    </div>
+  `;
+
+  // ── Song cards ──
+  const STYLE_NAMES   = ['Solo · Intimate',   'Full Band · Rich',      'Minimal · Cinematic'];
+  const STYLE_BADGES  = ['SOLO',              'FULL BAND',             'MINIMAL'];
+  const STYLE_ICONS   = ['🎹',               '🎸',                    '🎻'];
+  const STYLE_DESCS   = [
+    'intimate · emotional depth',
+    'layered · rich production',
+    'sparse · slow build',
+  ];
+
+  const grid = document.getElementById('songs-grid');
+  grid.innerHTML = '';
+
+  (data.songs || []).forEach((song, i) => {
+    // ── Convert audio_b64 → playable blob URL ──
+    if (song.audio_b64 && !song.audio_url) {
+      try {
+        const binary = atob(song.audio_b64);
+        const bytes  = new Uint8Array(binary.length);
+        for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+        const blob = new Blob([bytes], { type: 'audio/wav' });
+        song.audio_url = URL.createObjectURL(blob);
+        blobURLs.push(song.audio_url);
+      } catch(e) {
+        console.error('audio decode failed', e);
+      }
+    }
+
+    // Normalise fields
+    song.title  = song.title  || STYLE_NAMES[i]  || `Track ${song.id}`;
+    song.label  = song.label  || face.label;
+    song.vibe   = song.vibe   || STYLE_DESCS[i]  || '';
+    song.tags   = song.tags   || (song.prompt ? song.prompt.substring(0, 80) : '');
+    song._badge = STYLE_BADGES[i] || `TRACK ${i+1}`;
+    song._icon  = STYLE_ICONS[i]  || '🎵';
+
+    grid.appendChild(buildCard(song));
+  });
+
+  results.classList.add('visible');
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Card builder ───────────────────────────────────────────────────────────
+function buildCard(song) {
+  const card = document.createElement('div');
+  card.className = 'song-card';
+  card.dataset.id = song.id;
+
+  // Audio HTML
+  let audioHTML;
+  if (song.audio_url) {
+    audioHTML = `
+      <div class="audio-wrap">
+        <audio controls preload="metadata" src="${song.audio_url}">
+          Your browser does not support audio playback.
+        </audio>
+      </div>`;
+  } else {
+    audioHTML = `
+      <div class="audio-wrap">
+        <div class="no-audio">
+          <span class="no-audio-icon">🔇</span>
+          <span>No audio available for this track</span>
+        </div>
+      </div>`;
+  }
+
+  card.innerHTML = `
+    <div class="card-inner">
+      <div class="cover">
+        <div class="cover-placeholder">${song._icon}</div>
+        <div class="cover-overlay" onclick="coverClick(${song.id})">▶</div>
+      </div>
+      <div class="song-meta">
+        <div class="song-badges">
+          <span class="badge badge-style">${song._badge}</span>
+          <span class="badge badge-emotion">${song.label}</span>
+        </div>
+        <div class="song-title">${song.title}</div>
+        <div class="song-desc">${song.vibe}</div>
+      </div>
+      <div class="wave-anim">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="song-dur">0:20</div>
+    </div>
+    ${audioHTML}
+    <div class="card-footer">
+      <div class="card-tags">${song.tags}</div>
+    </div>
+  `;
+
+  // Wire audio events
+  const audio = card.querySelector('audio');
+  if (audio) {
+    audio.addEventListener('play',  () => {
+      // pause all others
+      document.querySelectorAll('audio').forEach(a => { if (a !== audio) a.pause(); });
+      document.querySelectorAll('.song-card').forEach(c => c.classList.remove('playing'));
+      card.classList.add('playing');
+    });
+    audio.addEventListener('pause', () => card.classList.remove('playing'));
+    audio.addEventListener('ended', () => card.classList.remove('playing'));
+    audio.addEventListener('error', () => {
+      audio.closest('.audio-wrap').innerHTML = `
+        <div class="no-audio">
+          <span class="no-audio-icon">⚠</span>
+          <span>Could not load audio stream</span>
+        </div>`;
+    });
+  }
+
+  return card;
+}
+
+// Cover click → toggle play
+function coverClick(id) {
+  const card  = document.querySelector(`.song-card[data-id="${id}"]`);
+  const audio = card && card.querySelector('audio');
+  if (!audio) return;
+  audio.paused ? audio.play() : audio.pause();
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function stopAllAudio() {
+  document.querySelectorAll('audio').forEach(a => a.pause());
+  document.querySelectorAll('.song-card').forEach(c => c.classList.remove('playing'));
+}
+
+function revokeBlobURLs() {
+  blobURLs.forEach(u => URL.revokeObjectURL(u));
+  blobURLs = [];
+}
+
+function showToast(msg, ms = 4500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
+
+// ── Reset ──────────────────────────────────────────────────────────────────
+btnReset.addEventListener('click', () => {
+  stopAllAudio();
+  revokeBlobURLs();
+  selectedFile = null;
+  fileInput.value = '';
+  previewImg.src = '';
+  document.getElementById('drop-default').style.display = 'block';
+  document.getElementById('drop-preview').style.display = 'none';
+  dropZone.classList.remove('has-file');
+  btnAnalyze.classList.remove('visible');
+  document.getElementById('file-hint').textContent = '';
+  results.classList.remove('visible');
+  document.getElementById('upload-section').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+</script>
+</body>
+</html>
