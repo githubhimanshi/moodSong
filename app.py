@@ -20,7 +20,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 def root():
-    return FileResponse("static/index.html")
+    return FileResponse("index.html")
 
 
 # ── Anthropic client ───────────────────────────────────────────────────────
